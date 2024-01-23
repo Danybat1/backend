@@ -1,0 +1,171 @@
+diff --git a/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js b/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
+index 72836a4..9e2253b 100644
+--- a/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
++++ b/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
+@@ -3,13 +3,13 @@
+  *
+  */
+ 
+-import React, { memo, useMemo } from 'react';
++import React, { memo, useMemo, useState, useEffect } from 'react';
+ import { FormattedMessage } from 'react-intl';
+ import styled from 'styled-components';
+ import { Helmet } from 'react-helmet';
+ import { useHistory } from 'react-router-dom';
+ import { LoadingIndicatorPage, useGuidedTour } from '@strapi/helper-plugin';
+-import { Layout, Main, Box, Grid, GridItem } from '@strapi/design-system';
++import { Table, Thead, Tbody, Tr, Td, Th, Layout, Main, Avatar, Box, Grid, GridItem, Typography, VisuallyHidden, BaseCheckbox } from '@strapi/design-system';
+ import useLicenseLimitNotification from 'ee_else_ce/hooks/useLicenseLimitNotification';
+ import cornerOrnamentPath from './assets/corner-ornament.svg';
+ import { useModels } from '../../hooks';
+@@ -31,60 +31,107 @@ const LogoContainer = styled(Box)`
+ 
+ const HomePage = () => {
+   // Temporary until we develop the menu API
+-  const { collectionTypes, singleTypes, isLoading: isLoadingForModels } = useModels();
+-  const { guidedTourState, isGuidedTourVisible, isSkipped } = useGuidedTour();
+-  useLicenseLimitNotification();
+ 
+-  const showGuidedTour =
+-    !isGuidedTourCompleted(guidedTourState) && isGuidedTourVisible && !isSkipped;
++  const ROW_COUNT = 2;
++  const COL_COUNT = 4;
+ 
+-  const { push } = useHistory();
+-  const handleClick = (e) => {
+-    e.preventDefault();
++  const [entries, setEntries] = useState([
++    { title: "Total", traffic: "RAS", booking: "RAS", posts: "RAS" },
++    { title: "Moyenne Par Jour", traffic: "RAS", booking: "RAS", posts: "RAS" },
++  ]);
+ 
+-    push('/plugins/content-type-builder/content-types/create-content-type');
+-  };
++  const [isLoading, setISLoading] = React.useState(true)
+ 
+-  const hasAlreadyCreatedContentTypes = useMemo(() => {
+-    const filterContentTypes = (contentTypes) => contentTypes.filter((c) => c.isDisplayed);
++  useEffect(() => {
++    (async () => {
++      await fetch("/api/analytics").then(async (res) => {
++        await res.json().then(analytics => {
+ 
+-    return (
+-      filterContentTypes(collectionTypes).length > 1 || filterContentTypes(singleTypes).length > 0
+-    );
+-  }, [collectionTypes, singleTypes]);
++          console.log("analytics data results", analytics);
+ 
+-  if (isLoadingForModels) {
+-    return <LoadingIndicatorPage />;
+-  }
++          if (analytics?.traffic?.total >= 0) {
++
++            setEntries([
++              { title: "Total", traffic: analytics?.traffic?.total, booking: analytics?.booking?.total, },
++              { title: "Moyenne Par Jour", traffic: analytics?.traffic?.average, booking: analytics?.booking?.average },
++            ])
++          }
++
++          setISLoading(false)
++        }).catch(error => {
++          console.log("an error has occured when computing analytics data", error);
++
++          setISLoading(false)
++        })
++      }).catch(error => {
++        console.log("an error has occured when fetching analytics data", error);
++
++        setISLoading(false)
++      })
++    })()
++  }, [])
+ 
+   return (
+     <Layout>
+-      <FormattedMessage id="HomePage.helmet.title" defaultMessage="Homepage">
++      {isLoading ? <LoadingIndicatorPage /> : <> <FormattedMessage id="HomePage.helmet.title" defaultMessage="Homepage">
+         {(title) => <Helmet title={title[0]} />}
+       </FormattedMessage>
+-      <Main>
+-        <LogoContainer>
+-          <img alt="" aria-hidden src={cornerOrnamentPath} />
+-        </LogoContainer>
+-        <Box padding={10}>
+-          <Grid>
+-            <GridItem col={8} s={12}>
+-              <HomeHeader
+-                onCreateCT={handleClick}
+-                hasCreatedContentType={hasAlreadyCreatedContentTypes}
+-              />
+-            </GridItem>
+-          </Grid>
+-          <Grid gap={6}>
+-            <GridItem col={8} s={12}>
+-              {showGuidedTour ? <GuidedTourHomepage /> : <ContentBlocks />}
+-            </GridItem>
+-            <GridItem col={4} s={12}>
+-              <SocialLinks />
+-            </GridItem>
+-          </Grid>
+-        </Box>
+-      </Main>
++        <Main>
++          <LogoContainer>
++            <img alt="" aria-hidden src={cornerOrnamentPath} />
++          </LogoContainer>
++          <Box padding={8} background="neutral100">
++            <Table colCount={COL_COUNT} rowCount={ROW_COUNT}>
++
++              {/**
++ * 
++            <caption><Typography>Activité sur votre site webs</Typography></caption>
++ * 
++ * 
++ * 
++ */}
++              <Thead>
++                <Tr>
++                  <Th>
++                    <Typography variant="sigma" textColor={"#FFFFFF"}></Typography>
++                  </Th>
++                  <Th>
++                    <Typography variant="sigma">VISITES</Typography>
++                  </Th>
++                  <Th>
++                    <Typography variant="sigma">RESERVATIONS</Typography>
++                  </Th>
++                </Tr>
++              </Thead>
++              <Tbody>
++                {entries.map((entry, index) => <Tr key={index}>
++                  <Td>
++                    <Typography textColor="neutral800">{entry?.title}</Typography>
++                  </Td>
++                  <Td>
++                    <Typography textColor="neutral800">{entry?.traffic}</Typography>
++                  </Td>
++                  <Td>
++                    <Typography textColor="neutral800">{entry?.booking}</Typography>
++                  </Td>
++                </Tr>)}
++              </Tbody>
++            </Table>
++
++            <div style={{
++              marginTop: "50vh",
++
++            }}>
++              <a href={"https://rhinocerosoftware.com"} style= {{
++                textDecoration: "none"
++              }}> 
++                <Typography variant={""}>Powered by Rhinoceros Software SAS &copy; {new Date().getFullYear()} All rights reserved</Typography>
++              </a>
++            </div>
++          </Box>
++
++        </Main></>}
++
+     </Layout>
+   );
+ };

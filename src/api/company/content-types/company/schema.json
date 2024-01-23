@@ -1,0 +1,90 @@
+{
+  "kind": "collectionType",
+  "collectionName": "companies",
+  "info": {
+    "singularName": "company",
+    "pluralName": "companies",
+    "displayName": "company",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "emailAddress": {
+      "type": "string"
+    },
+    "phoneNumber": {
+      "type": "string"
+    },
+    "cnssNo": {
+      "type": "string"
+    },
+    "idNat": {
+      "type": "string"
+    },
+    "rccm": {
+      "type": "string"
+    },
+    "nif": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "baseCurrency": {
+      "type": "enumeration",
+      "enum": [
+        "USD",
+        "CDF",
+        "EUR",
+        "CFA"
+      ]
+    },
+    "targetCurrency": {
+      "type": "enumeration",
+      "enum": [
+        "CDF",
+        "USD",
+        "EUR",
+        "CFA"
+      ]
+    },
+    "exchangeRate": {
+      "type": "decimal"
+    },
+    "signatures": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::signature.signature",
+      "mappedBy": "company"
+    },
+    "documents": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::document.document",
+      "mappedBy": "company"
+    },
+    "employees": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "company"
+    }
+  }
+}

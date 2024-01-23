@@ -1,0 +1,56 @@
+{
+  "kind": "collectionType",
+  "collectionName": "documents",
+  "info": {
+    "singularName": "document",
+    "pluralName": "documents",
+    "displayName": "document",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "department": {
+      "type": "string"
+    },
+    "expiryDate": {
+      "type": "datetime"
+    },
+    "company": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::company.company",
+      "inversedBy": "documents"
+    },
+    "validationLevel": {
+      "type": "integer"
+    },
+    "levelVersions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::doc-version.doc-version",
+      "mappedBy": "parentDocument"
+    },
+    "doc_folder": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::doc-folder.doc-folder",
+      "inversedBy": "documents"
+    },
+    "attachedFiles": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
+    }
+  }
+}

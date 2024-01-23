@@ -1,0 +1,24 @@
+{
+  "kind": "collectionType",
+  "collectionName": "doc_folders",
+  "info": {
+    "singularName": "doc-folder",
+    "pluralName": "doc-folders",
+    "displayName": "docFolder"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "documents": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::document.document",
+      "mappedBy": "doc_folder"
+    }
+  }
+}

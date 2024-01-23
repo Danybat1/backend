@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_education_educations",
+  "info": {
+    "displayName": "education"
+  },
+  "options": {},
+  "attributes": {
+    "institutionName": {
+      "type": "string"
+    },
+    "studies": {
+      "type": "string"
+    },
+    "certificationType": {
+      "type": "string"
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "endDate": {
+      "type": "date"
+    },
+    "country": {
+      "type": "string"
+    }
+  }
+}

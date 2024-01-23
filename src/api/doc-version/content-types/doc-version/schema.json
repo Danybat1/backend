@@ -1,0 +1,71 @@
+{
+  "kind": "collectionType",
+  "collectionName": "doc_versions",
+  "info": {
+    "singularName": "doc-version",
+    "pluralName": "doc-versions",
+    "displayName": "docVersion",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "level": {
+      "type": "integer"
+    },
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "parentDocument": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::document.document",
+      "inversedBy": "levelVersions"
+    },
+    "signed": {
+      "type": "boolean",
+      "default": false
+    },
+    "rejectionMessage": {
+      "type": "text"
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "contributions"
+    },
+    "dateCoords": {
+      "type": "text"
+    },
+    "datePage": {
+      "type": "integer"
+    },
+    "rejectionDate": {
+      "type": "datetime"
+    },
+    "acceptNotifications": {
+      "type": "boolean",
+      "default": true
+    },
+    "signCoords": {
+      "type": "text"
+    },
+    "signPage": {
+      "type": "integer"
+    },
+    "validationDate": {
+      "type": "datetime"
+    }
+  }
+}
