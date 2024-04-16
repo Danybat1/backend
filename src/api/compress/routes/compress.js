@@ -6,8 +6,8 @@ module.exports = {
   routes: [
     {
       method: "POST",
-      path: "/convert",
-      handler: "convert.index",
+      path: "/compress",
+      handler: "compress.index",
     },
   ],
 };

@@ -1,8 +1,8 @@
 diff --git a/node_modules/@strapi/plugin-users-permissions/server/controllers/auth.js b/node_modules/@strapi/plugin-users-permissions/server/controllers/auth.js
-index 02821f7..af246e9 100644
+index 02821f7..00f19fd 100644
 --- a/node_modules/@strapi/plugin-users-permissions/server/controllers/auth.js
 +++ b/node_modules/@strapi/plugin-users-permissions/server/controllers/auth.js
-@@ -51,13 +51,22 @@ module.exports = {
+@@ -51,13 +51,28 @@ module.exports = {
        const { identifier } = params;
  
        // Check if the user exists.
@@ -19,6 +19,12 @@ index 02821f7..af246e9 100644
 +          department: {
 +            populate: true
 +          },
++          profile: {
++            populate: true
++          },
++          role: {
++            populate: true
++          }
 +        }
        });
  
@@ -27,13 +33,15 @@ index 02821f7..af246e9 100644
        if (!user) {
          throw new ValidationError('Invalid identifier or password');
        }
-@@ -86,9 +95,14 @@ module.exports = {
+@@ -86,9 +101,16 @@ module.exports = {
          throw new ApplicationError('Your account has been blocked by an administrator');
        }
  
 +      delete user["password"];
 +      delete user["resetPasswordToken"];
 +      delete user["confirmationToken"];
++
++      user.role = user?.role?.name
 +
        return ctx.send({
          jwt: getService('jwt').issue({ id: user.id }),
@@ -43,18 +51,40 @@ index 02821f7..af246e9 100644
        });
      }
  
+@@ -228,11 +250,12 @@ module.exports = {
+     const emailBody = await getService('users-permissions').template(
+       resetPasswordSettings.message,
+       {
+-        URL: advancedSettings.email_reset_password,
++        URL: `${process.env.IO_ORIGIN}/auth/reset-password`,
+         SERVER_URL: getAbsoluteServerUrl(strapi.config),
+         ADMIN_URL: getAbsoluteAdminUrl(strapi.config),
+         USER: userInfo,
+         TOKEN: resetPasswordToken,
++        NAME: userInfo?.username
+       }
+     );
+ 
 diff --git a/node_modules/@strapi/plugin-users-permissions/server/controllers/user.js b/node_modules/@strapi/plugin-users-permissions/server/controllers/user.js
-index 1b45e05..d3e89aa 100644
+index 1b45e05..c63bc7e 100644
 --- a/node_modules/@strapi/plugin-users-permissions/server/controllers/user.js
 +++ b/node_modules/@strapi/plugin-users-permissions/server/controllers/user.js
-@@ -144,9 +144,26 @@ module.exports = {
+@@ -11,6 +11,8 @@ const utils = require('@strapi/utils');
+ const { getService } = require('../utils');
+ const { validateCreateUserBody, validateUpdateUserBody } = require('./validation/user');
+ 
++const { parseDocuments } = require("../utils/parseDocuments")
++
+ const { sanitize } = utils;
+ const { ApplicationError, ValidationError, NotFoundError } = utils.errors;
+ 
+@@ -144,9 +146,27 @@ module.exports = {
     */
    async find(ctx) {
      const sanitizedQuery = await sanitizeQuery(ctx.query, ctx);
 -    const users = await getService('user').fetchAll(sanitizedQuery);
 +    // const users = await getService('user').fetchAll(sanitizedQuery);
- 
--    ctx.body = await Promise.all(users.map((user) => sanitizeOutput(user, ctx)));
++
 +
 +    // ctx.body = await Promise.all(users.map((user) => sanitizeOutput(user, ctx)));
 +
@@ -63,20 +93,22 @@ index 1b45e05..d3e89aa 100644
 +
 +      },
 +
-+      populate: ["company", "department"]
++      populate: ["company", "department", "role"]
 +    });
 +
 +    // console.log("received users data here all", users);
-+
+ 
+-    ctx.body = await Promise.all(users.map((user) => sanitizeOutput(user, ctx)));
 +    ctx.body = users?.map(_user => {
 +      delete _user["password"];
++      _user.role = _user?.role?.id;
 +
 +      return _user
 +    })
    },
  
    /**
-@@ -157,13 +174,305 @@ module.exports = {
+@@ -157,13 +177,394 @@ module.exports = {
      const { id } = ctx.params;
      const sanitizedQuery = await sanitizeQuery(ctx.query, ctx);
  
@@ -87,9 +119,67 @@ index 1b45e05..d3e89aa 100644
 +
 +    let user = await strapi.db.query('plugin::users-permissions.user').findOne({
 +      where: {
-+        id: id
++        $and: [
++          {
++            id: id,
++          },
++        ]
 +      },
 +      populate: {
++        documentsToView: {
++          populate: {
++            levelVersions: {
++              populate: {
++                file: {
++                  populate: true
++                },
++                author: {
++                  populate: true
++                },
++                parentDocument: {
++                  populate: {
++                    levelVersions: {
++                      populate: {
++                        author: {
++                          populate: true
++                        },
++                        file: {
++                          populate: true
++                        },
++                        displayObjects: {
++                          populate: true
++                        }
++                      },
++                    },
++                    doc_folder: {
++                      populate: true
++                    },
++                    annexes: {
++                      populate: {
++                        levelVersions: {
++                          populate: {
++                            author: {
++                              populate: true
++                            },
++                            file: {
++                              populate: true
++                            },
++                            displayObjects: {
++                              populate: true
++                            }
++                          }
++                        },
++                        underlying_file: {
++                          populate: true
++                        }
++                      }
++                    }
++                  }
++                }
++              },
++            }
++          }
++        },
 +        contributions: {
 +          populate: {
 +            file: {
@@ -107,14 +197,34 @@ index 1b45e05..d3e89aa 100644
 +                    },
 +                    file: {
 +                      populate: true
++                    },
++                    displayObjects: {
++                      populate: true
 +                    }
-+                  }
++                  },
 +                },
 +                doc_folder: {
 +                  populate: true
 +                },
-+                attachedFiles: {
-+                  populate: true
++                annexes: {
++                  populate: {
++                    levelVersions: {
++                      populate: {
++                        author: {
++                          populate: true
++                        },
++                        file: {
++                          populate: true
++                        },
++                        displayObjects: {
++                          populate: true
++                        }
++                      }
++                    },
++                    underlying_file: {
++                      populate: true
++                    }
++                  }
 +                }
 +              }
 +            }
@@ -133,21 +243,34 @@ index 1b45e05..d3e89aa 100644
 +    delete user["resetPasswordToken"];
 +    delete user["confirmationToken"];
 +
-+    // console.log("received connnected user's data", user);
++    // user?.contributions?.push(...user?.documentsToView?.map(target => {
++    //   return target?.levelVersions?.find(_target => {
++    //     return _target?.level === 1
++    //   })
++    // }));
 +
-+    /**
-+     * 
-+     *  if (data) {
-+       data = await sanitizeOutput(data, ctx);
-+     }
-+     */
++    const viewVersions = user["documentsToView"]?.map(target => {
++      const _version = target?.levelVersions?.find(_target => {
++        return _target?.level === 1
++      });
++
++      console.log("current version here", _version);
++
++      return _version
++    })
++
++    user.contributions.push(...viewVersions)
++    
++    // console.log("computed user's view contributions", viewVersions);
++
++    delete user["documentsToView"]
 +
 +    let pendingDocs = [];
 +    let ownDocs = [];
 +    let signedDocs = [];
 +
 +    user?.contributions?.filter(target => {
-+      return target?.level <= target?.parentDocument?.validationLevel || target?.level - 1 === target?.parentDocument?.validationLevel
++      return (target?.level <= target?.parentDocument?.validationLevel || target?.level - 1 === target?.parentDocument?.validationLevel) && target?.isAnnex === false && target?.parentDocument?.annexesCompleted !== false
 +    })?.forEach(target => {
 +
 +      const selfRejected = target?.rejectionMessage?.length > 0;
@@ -165,7 +288,6 @@ index 1b45e05..d3e89aa 100644
 +      let rejectedBy = {};
 +
 +      let isRejected = target?.parentDocument?.levelVersions?.some(_target => {
-+
 +        if (_target?.rejectionMessage?.length > 0) {
 +          rejectedBy = {
 +            ..._target?.author,
@@ -183,8 +305,7 @@ index 1b45e05..d3e89aa 100644
 +        return _target?.signed == false && !(_target?.rejectionMessage?.length > 0)
 +      })?.length;
 +
-+      // console.log("documents params rejection status etc", { isRejected, rejectedBy, remainingSignatures });
-+
++      // the id of the contribution (version) of the current user for the current document, one contrib per document (one versionId)
 +      target["versionId"] = target?.id;
 +
 +      if (target?.level === 1) {
@@ -225,7 +346,7 @@ index 1b45e05..d3e89aa 100644
 +          }
 +
 +
-+          console.log("currently processed verion datum", version);
++          // console.log("currently processed verion datum", version);
 +
 +          return version
 +        });
@@ -284,13 +405,13 @@ index 1b45e05..d3e89aa 100644
 +            contributions: undefined
 +          }
 +        })
-+
-+        if (datum?.rejectedBy?.contributions) {
-+          datum.rejectedBy.contributions = undefined
-+        }
  
 -    if (data) {
 -      data = await sanitizeOutput(data, ctx);
++        if (datum?.rejectedBy?.contributions) {
++          datum.rejectedBy.contributions = undefined
++        }
++
 +        datum.levelVersions = datum?.levelVersions?.map(version => {
 +
 +          version["author"] = {
@@ -374,9 +495,9 @@ index 1b45e05..d3e89aa 100644
 +
 +    user = {
 +      ...user,
-+      pendingDocs,
-+      ownDocs,
-+      signedDocs
++      pendingDocs: parseDocuments(pendingDocs),
++      ownDocs: parseDocuments(ownDocs),
++      signedDocs: parseDocuments(signedDocs)
      }
  
 -    ctx.body = data;
@@ -414,3 +535,78 @@ index 27cf71a..9d3c3e3 100644
    },
  
    /**
+diff --git a/node_modules/@strapi/plugin-users-permissions/server/utils/parseDocuments.js b/node_modules/@strapi/plugin-users-permissions/server/utils/parseDocuments.js
+new file mode 100644
+index 0000000..8db99da
+--- /dev/null
++++ b/node_modules/@strapi/plugin-users-permissions/server/utils/parseDocuments.js
+@@ -0,0 +1,69 @@
++
++// utility function definition
++
++const parseDocuments = (docObjects) => {
++    return docObjects?.sort((prev, next) => {
++        return new Date(next?.createdAt).getTime() - new Date(prev?.createdAt).getTime()
++    })?.map((target) => {
++
++        // console.log("received datat target for single doc", target);
++
++        return {
++            id: target?.id,
++            author: {
++                fullName:
++                    target?.author?.username,
++                id: target?.author?.id,
++                profile: `${process.env.API_HOST}${target?.author?.profile?.url}`
++            },
++            title: target?.title,
++            recipients: target?.recipients?.map(
++                (recipient) => {
++                    return {
++                        fullName: recipient?.username,
++                        id: recipient?.id,
++                        profile: `${process.env.API_HOST}${recipient?.profile?.url}`,
++                        email: recipient?.email,
++                        department:
++                            recipient?.department?.name,
++                    };
++                }
++            ),
++            issuyingDate: new Date(
++                target?.createdAt
++            )?.toLocaleString("fr-FR"),
++            expiryDate: new Date(
++                target?.expiryDate
++            )?.toLocaleString("fr-FR"),
++            department: target?.department,
++            status: target?.status,
++            finalStatus: target?.finalStatus,
++            file: {
++                name: target?.file?.data
++                    ?.name,
++                path: `${process.env.API_HOST}${target?.file?.url}`,
++            },
++            versionId: target?.versionId,
++            rejectedBy: target?.rejectedBy,
++            rejectionDate: target?.rejectionDate,
++            dateCoords: target?.dateCoords,
++            signCoords: target?.signCoords,
++            datePage: target?.datePage,
++            signPage: target?.signPage,
++            doc_folder: target?.doc_folder,
++            attachedFiles: target?.annexes?.map(doc => {
++                return {
++                    ...parseDocuments([doc])[0],
++                    name: doc?.title,
++                    path: `${process.env.API_HOST}${doc?.underlying_file?.url}`,
++                    title: undefined
++                }
++            }),
++            levelVersions: target?.levelVersions,
++            validationLevel: target?.validationLevel,
++            createdAt: target?.createdAt
++        };
++    });
++};
++
++module.exports =  { parseDocuments };

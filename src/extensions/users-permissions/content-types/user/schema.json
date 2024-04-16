@@ -108,6 +108,12 @@
       "relation": "oneToMany",
       "target": "api::doc-version.doc-version",
       "mappedBy": "author"
+    },
+    "documentsToView": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::document.document",
+      "mappedBy": "viewers"
     }
   }
 }

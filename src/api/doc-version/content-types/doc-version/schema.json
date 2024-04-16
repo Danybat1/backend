@@ -66,6 +66,16 @@
     },
     "validationDate": {
       "type": "datetime"
+    },
+    "isAnnex": {
+      "type": "boolean",
+      "default": false
+    },
+    "displayObjects": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::display-object.display-object",
+      "mappedBy": "doc_version"
     }
   }
 }

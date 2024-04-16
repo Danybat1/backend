@@ -1,5 +1,5 @@
 diff --git a/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js b/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
-index 72836a4..9e2253b 100644
+index 72836a4..035037e 100644
 --- a/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
 +++ b/node_modules/@strapi/admin/admin/src/pages/HomePage/index.js
 @@ -3,13 +3,13 @@
@@ -18,7 +18,7 @@ index 72836a4..9e2253b 100644
  import useLicenseLimitNotification from 'ee_else_ce/hooks/useLicenseLimitNotification';
  import cornerOrnamentPath from './assets/corner-ornament.svg';
  import { useModels } from '../../hooks';
-@@ -31,60 +31,107 @@ const LogoContainer = styled(Box)`
+@@ -31,60 +31,74 @@ const LogoContainer = styled(Box)`
  
  const HomePage = () => {
    // Temporary until we develop the menu API
@@ -45,40 +45,17 @@ index 72836a4..9e2253b 100644
  
 -  const hasAlreadyCreatedContentTypes = useMemo(() => {
 -    const filterContentTypes = (contentTypes) => contentTypes.filter((c) => c.isDisplayed);
-+  useEffect(() => {
-+    (async () => {
-+      await fetch("/api/analytics").then(async (res) => {
-+        await res.json().then(analytics => {
- 
+-
 -    return (
 -      filterContentTypes(collectionTypes).length > 1 || filterContentTypes(singleTypes).length > 0
 -    );
 -  }, [collectionTypes, singleTypes]);
-+          console.log("analytics data results", analytics);
- 
+-
 -  if (isLoadingForModels) {
 -    return <LoadingIndicatorPage />;
 -  }
-+          if (analytics?.traffic?.total >= 0) {
-+
-+            setEntries([
-+              { title: "Total", traffic: analytics?.traffic?.total, booking: analytics?.booking?.total, },
-+              { title: "Moyenne Par Jour", traffic: analytics?.traffic?.average, booking: analytics?.booking?.average },
-+            ])
-+          }
-+
-+          setISLoading(false)
-+        }).catch(error => {
-+          console.log("an error has occured when computing analytics data", error);
-+
-+          setISLoading(false)
-+        })
-+      }).catch(error => {
-+        console.log("an error has occured when fetching analytics data", error);
-+
-+        setISLoading(false)
-+      })
-+    })()
++  useEffect(() => {
++    setISLoading(false)
 +  }, [])
  
    return (
@@ -115,15 +92,7 @@ index 72836a4..9e2253b 100644
 +            <img alt="" aria-hidden src={cornerOrnamentPath} />
 +          </LogoContainer>
 +          <Box padding={8} background="neutral100">
-+            <Table colCount={COL_COUNT} rowCount={ROW_COUNT}>
-+
-+              {/**
-+ * 
-+            <caption><Typography>Activité sur votre site webs</Typography></caption>
-+ * 
-+ * 
-+ * 
-+ */}
++            {/* <Table colCount={COL_COUNT} rowCount={ROW_COUNT}>
 +              <Thead>
 +                <Tr>
 +                  <Th>
@@ -150,15 +119,15 @@ index 72836a4..9e2253b 100644
 +                  </Td>
 +                </Tr>)}
 +              </Tbody>
-+            </Table>
++            </Table> */}
 +
 +            <div style={{
-+              marginTop: "50vh",
++              marginTop: "70vh",
 +
 +            }}>
-+              <a href={"https://rhinocerosoftware.com"} style= {{
++              <a href={"https://rhinocerosoftware.co"} style={{
 +                textDecoration: "none"
-+              }}> 
++              }}>
 +                <Typography variant={""}>Powered by Rhinoceros Software SAS &copy; {new Date().getFullYear()} All rights reserved</Typography>
 +              </a>
 +            </div>

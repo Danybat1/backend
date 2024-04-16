@@ -13,20 +13,11 @@ const LOG_FILE_NAME = `${LOGPATH}/${APP_NAME}-%DATE%-{{suffix}}.log`
 
 const { printf, combine, timestamp, label } = winston.format;
 
-// Our Custom Format of Logging
-
 const logCustomFormat = printf(
 
     ({ level, message, label, timestamp, stack, info }) => {
 
-        return safeStringify({
-            timestamp,
-            label,
-            message,
-            info: info,
-            stack,
-
-        });
+        return `${label} ${level} : ${message} ${info || ""} ${stack || ""}`;
 
     }
 

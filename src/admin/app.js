@@ -37,10 +37,12 @@ export default {
           "Status actuel du système",
       },
     },
+
     // Replace the favicon
     head: {
       favicon: favicon,
     },
+
     // Replace the Strapi logo in the main navigation
     menu: {
       logo: MenuLogo,
@@ -83,5 +85,5 @@ export default {
     tutorials: false,
   },
 
-  bootstrap() {},
+  bootstrap() { },
 };

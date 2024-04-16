@@ -42,15 +42,38 @@
       "target": "api::doc-folder.doc-folder",
       "inversedBy": "documents"
     },
-    "attachedFiles": {
+    "annexOf": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::document.document",
+      "inversedBy": "annexes"
+    },
+    "annexes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::document.document",
+      "mappedBy": "annexOf"
+    },
+    "underlying_file": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": true
+      ]
+    },
+    "viewers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "documentsToView"
+    },
+    "annexesCompleted": {
+      "type": "boolean",
+      "default": true
     }
   }
 }
