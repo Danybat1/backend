@@ -12,6 +12,7 @@ export default {
     auth: {
       logo: AuthLogo,
     },
+    
     translations: {
       en: {
         "app.components.LeftMenu.navbrand.title": "Linzaka Admin",
